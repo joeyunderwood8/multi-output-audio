@@ -1,5 +1,7 @@
 # Multi-Output Audio
 
+Made this for my girlfriend and I to watch the Duton Ranch finale during 4th of July weekend at a small cabin with my family. Updated it a bit afterwards later since it worked so well.
+
 Play your Mac's audio to **several devices at once** — two or more AirPods,
 headphones, or speakers all playing the same thing. macOS has no built-in "Share
 Audio" like the iPhone does; this fills that gap with a small menu-bar app that
