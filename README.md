@@ -8,66 +8,71 @@ Audio" like the iPhone does; this fills that gap with a small menu-bar app that
 builds a CoreAudio multi-output ("aggregate") device — the same thing Audio MIDI
 Setup does, but as one click.
 
-Works with **any output device** — AirPods, other Bluetooth headphones/speakers
-(Bose, Sony, JBL, Beats), the built-in speakers, USB/DAC, wired earbuds — in any
-combination.
+<img src="screenshot.png" alt="Multi-Output Audio menu-bar panel" width="360">
 
-## Build
+## Getting it running
+
+You set this up once, using the **Terminal** app. For each step below, copy the
+command, paste it into Terminal, and press **Return**. A short explanation follows
+each one.
+
+**1. Open Terminal.** Press `Cmd` + `Space`, type `Terminal`, and press Return. A
+window with a text prompt opens — that's where the commands go.
+
+**2. Install Apple's build tools.**
+
+```sh
+xcode-select --install
+```
+
+If a box pops up, click **Install** and let it finish. If it says they're already
+installed, that's fine — continue.
+
+**3. Download the project.**
+
+```sh
+git clone https://github.com/joeyunderwood8/multi-output-audio.git
+```
+
+This copies the project into a folder on your Mac called `multi-output-audio`.
+
+**4. Move into that folder.**
+
+```sh
+cd multi-output-audio
+```
+
+**5. Build the app.**
 
 ```sh
 ./build-app.sh
 ```
 
-Compiles [`MultiOutputAudioApp.swift`](MultiOutputAudioApp.swift) and produces
-`Multi-Output Audio.app`. Requires the Xcode command-line tools
-(`xcode-select --install`) and macOS 13 or later.
+This turns the code into a real Mac app. It takes a few seconds.
 
-## Run
+**6. Open it.**
 
 ```sh
-open "./Multi-Output Audio.app"
+open "Multi-Output Audio.app"
 ```
 
-Look for the **headphones icon in your menu bar** (top-right of the screen) and
-click it to open the panel.
+A **headphones icon** appears in your menu bar (top-right of the screen, near the
+clock and Wi-Fi).
 
-## What it does
+> Next time, you don't need the Terminal — just double-click **Multi-Output Audio**
+> inside the `multi-output-audio` folder in Finder.
 
-- **Live device list.** Every output device appears, Bluetooth ones first. Connect
-  a new device and the list updates instantly with a "🎧 *Name* connected" banner.
-- **A checkbox per device.** Tick the ones you want to play to together — any
-  number, any mix of types.
-- **A volume slider per device**, with a live % readout, so you can set each
-  device independently. Devices that don't expose Mac-controllable volume say so
-  instead of showing a slider.
-- **Combine / stop.** "Play to *N* devices" builds the mix and makes it your Mac's
-  output; "Stop" tears it down and returns to a single output. The device currently
-  receiving audio is tagged **output**.
+## Using it
 
-## Stays out of the way
+1. Click the **headphones icon** in your menu bar.
+2. A panel drops down listing your speakers and headphones.
+3. **Tick the box** next to each device you want to play at the same time.
+4. Click **Play to N devices** — now they all play the same audio.
+5. Each device has its own **volume slider**; drag it to adjust that device.
+6. Click **Stop** to go back to a single device.
 
-The app only touches your audio output when you explicitly combine devices. With a
-single device connected it does nothing — macOS plays to it normally. And if a mix
-is running but a device drops off (AirPods die or leave range), the app notices
-there's nothing left to share, tears the mix down, and hands audio back to your Mac
-automatically.
+## Good to know
 
-## Notes & limitations
-
-- **How many devices?** There's no hard limit in the API. Two is rock-solid, three
-  is usually fine, four works but is where Bluetooth radio strain starts causing
-  dropouts and slight sync drift — especially across different brands. Wired and
-  built-in outputs don't count against the Bluetooth budget.
-- **The Mac volume keys don't work** while a multi-output device is active — this
-  is a macOS limitation, not a bug. Use the app's per-device sliders, swipe the
-  AirPods stems, or the sliders in Control Center → Sound.
-- **A mix doesn't survive a reboot.** Re-combine after restarting.
-
-## How it works
-
-Uses public CoreAudio HAL APIs: `AudioHardwareCreateAggregateDevice` with a
-*stacked* sub-device list (the same audio to every output), drift compensation on
-the non-master devices to keep their clocks aligned, and
-`kAudioHardwarePropertyDefaultOutputDevice` to route system audio into the combined
-device. It registers CoreAudio property listeners to track device connect/disconnect
-and volume changes live.
+- 2 devices is rock-solid; 4+ may drop out over Bluetooth.
+- The Mac volume keys don't work during a mix — use the sliders in the panel.
+- With one device connected, the app leaves your audio alone.
