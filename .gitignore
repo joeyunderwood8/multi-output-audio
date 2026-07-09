@@ -1,5 +1,5 @@
-# Compiled binary — build it with the command in the README
-dualaudio
+# Built app bundle — produced by ./build-app.sh
+Multi-Output Audio.app/
 
 # macOS
 .DS_Store

@@ -1,65 +1,71 @@
-# dualaudio
+# Multi-Output Audio
 
-Play your Mac's audio to **two AirPods (or any two outputs) at once**, from one
-command. macOS has no "Share Audio" feature like iOS does — this fills that gap
-by creating a CoreAudio multi-output ("aggregate") device, the same thing Audio
-MIDI Setup does, but scriptable.
+Play your Mac's audio to **several devices at once** — two or more AirPods,
+headphones, or speakers all playing the same thing. macOS has no built-in "Share
+Audio" like the iPhone does; this fills that gap with a small menu-bar app that
+builds a CoreAudio multi-output ("aggregate") device — the same thing Audio MIDI
+Setup does, but as one click.
+
+Works with **any output device** — AirPods, other Bluetooth headphones/speakers
+(Bose, Sony, JBL, Beats), the built-in speakers, USB/DAC, wired earbuds — in any
+combination.
 
 ## Build
 
 ```sh
-swiftc -O dualaudio.swift -o dualaudio -framework CoreAudio
+./build-app.sh
 ```
 
-Produces a `dualaudio` binary in the current directory. Requires the Xcode
-command-line tools (`xcode-select --install`).
+Compiles [`MultiOutputAudioApp.swift`](MultiOutputAudioApp.swift) and produces
+`Multi-Output Audio.app`. Requires the Xcode command-line tools
+(`xcode-select --install`) and macOS 13 or later.
 
-## Usage
-
-```
-dualaudio list                  Show output devices
-dualaudio on                    Combine the two connected Bluetooth outputs
-dualaudio on "Name A" "Name B"  Combine two specific devices (partial names ok)
-dualaudio off                   Remove the combo, back to built-in output
-dualaudio vol                   Show volume of both AirPods
-dualaudio vol 40                Set both to 40%  (also: vol up / vol down)
-dualaudio watch                 Keep the combo as output when macOS switches away
-dualaudio install               Run the watcher in the background at login
-dualaudio uninstall             Remove the background watcher
-```
-
-### Typical flow
-
-1. Connect both AirPods in System Settings → Bluetooth (both must show "Connected").
-2. `dualaudio on` — auto-detects the two Bluetooth outputs and makes the combo
-   your Mac's active output.
-3. `dualaudio off` when you're done.
-
-### The auto-switch problem
-
-When AirPods detect they're in your ears, macOS auto-connects them and steals the
-output away from the combo. There's no macOS setting to disable this. The watcher
-fixes it: it listens for output changes and switches back to the combo whenever
-macOS grabs it away.
+## Run
 
 ```sh
-dualaudio install     # runs the watcher now and at every login
-dualaudio uninstall   # stop it
+open "./Multi-Output Audio.app"
 ```
+
+Look for the **headphones icon in your menu bar** (top-right of the screen) and
+click it to open the panel.
+
+## What it does
+
+- **Live device list.** Every output device appears, Bluetooth ones first. Connect
+  a new device and the list updates instantly with a "🎧 *Name* connected" banner.
+- **A checkbox per device.** Tick the ones you want to play to together — any
+  number, any mix of types.
+- **A volume slider per device**, with a live % readout, so you can set each
+  device independently. Devices that don't expose Mac-controllable volume say so
+  instead of showing a slider.
+- **Combine / stop.** "Play to *N* devices" builds the mix and makes it your Mac's
+  output; "Stop" tears it down and returns to a single output. The device currently
+  receiving audio is tagged **output**.
+
+## Stays out of the way
+
+The app only touches your audio output when you explicitly combine devices. With a
+single device connected it does nothing — macOS plays to it normally. And if a mix
+is running but a device drops off (AirPods die or leave range), the app notices
+there's nothing left to share, tears the mix down, and hands audio back to your Mac
+automatically.
 
 ## Notes & limitations
 
+- **How many devices?** There's no hard limit in the API. Two is rock-solid, three
+  is usually fine, four works but is where Bluetooth radio strain starts causing
+  dropouts and slight sync drift — especially across different brands. Wired and
+  built-in outputs don't count against the Bluetooth budget.
 - **The Mac volume keys don't work** while a multi-output device is active — this
-  is a macOS limitation. Use `dualaudio vol`, swipe the AirPods stems, or the
-  per-device sliders in Control Center → Sound.
-- Combo devices don't survive a reboot; re-run `dualaudio on` after restarting.
-- While the watcher is running and a combo exists, switching output to anything
-  else needs `dualaudio off` first — the watcher fights other switches by design.
+  is a macOS limitation, not a bug. Use the app's per-device sliders, swipe the
+  AirPods stems, or the sliders in Control Center → Sound.
+- **A mix doesn't survive a reboot.** Re-combine after restarting.
 
 ## How it works
 
 Uses public CoreAudio HAL APIs: `AudioHardwareCreateAggregateDevice` with a
-*stacked* sub-device list (same audio to every output), drift compensation on the
-secondary device, and `kAudioHardwarePropertyDefaultOutputDevice` to route system
-audio into it. The watcher registers `AudioObjectPropertyListenerBlock`s on the
-default-output and device-list properties.
+*stacked* sub-device list (the same audio to every output), drift compensation on
+the non-master devices to keep their clocks aligned, and
+`kAudioHardwarePropertyDefaultOutputDevice` to route system audio into the combined
+device. It registers CoreAudio property listeners to track device connect/disconnect
+and volume changes live.
